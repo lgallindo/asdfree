@@ -37,7 +37,7 @@ hrs_cat <-
 # RAND consolidated file only
 hrs_cat <- subset( hrs_cat , grepl( 'rand([a-z]+)stata\\.zip' , file_name ) )
 # download the microdata to your local computer
-lodown( "hrs" , hrs_cat , 
+hrs_cat <- lodown( "hrs" , hrs_cat , 
 	your_username = "username" , 
 	your_password = "password" )
 ```
@@ -54,7 +54,17 @@ Construct a complex sample survey design:
 library(survey)
 
 hrs_df <- 
-	readRDS( list.files( hrs_cat$output_folder , full.names = TRUE ) )
+	readRDS( 
+		grep( 
+			'rand([a-z]+)stata(.*)rds$' , 
+			list.files( 
+				hrs_cat$output_folder , 
+				full.names = TRUE ,
+				recursive = TRUE
+			) ,
+			value = TRUE 
+		) 
+	)
 	
 # RAM cleanup
 keep_vars <- 

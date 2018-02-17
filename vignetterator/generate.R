@@ -1,6 +1,6 @@
 # Sys.getenv("RSTUDIO_PANDOC")
 Sys.setenv("RSTUDIO_PANDOC"="C:/Program Files/RStudio/bin/pandoc")
-commit_memo <- "'piaac'"
+commit_memo <- "'nls delim'"
 # source( file.path( path.expand( "~" ) , "Github/asdfree/vignetterator/generate.R" ) )
 
 # non-survey, not database-backed (ahrf)
@@ -20,9 +20,7 @@ source( "C:\\Users\\anthonyd\\Documents\\GitHub\\asdfree\\vignetterator\\tests_o
 needs_travis_build_status_line <- "[![Build Status](https://travis-ci.org/asdfree/chapter_tag.svg?branch=master)](https://travis-ci.org/asdfree/chapter_tag) [![Build status](https://ci.appveyor.com/api/projects/status/github/asdfree/chapter_tag?svg=TRUE)](https://ci.appveyor.com/project/ajdamico/chapter_tag)"
 
 
-needs_catalog_block <- '`lodown` also provides a catalog of available microdata extracts with the `get_catalog()` function.  After requesting the CHAPTER_TAG catalog, you could pass a subsetted catalog through the `lodown()` function in order to download and import specific extracts (rather than all available extracts).\n\n```{r eval = FALSE , results = "hide" }\nlibrary(lodown)\n# examine all available CHAPTER_TAG microdata files\nchapter_tag_cat <-\n\tget_catalog( "chapter_tag" ,\n\t\toutput_dir = file.path( path.expand( "~" ) , "CHAPTER_TAG" ) get_catalog_password_parameters )\n\ncatalog_subset_description\ncatalog_subset\n# download the microdata to your local computer\nlodown( "chapter_tag" , chapter_tag_cat lodown_password_parameters )\n```'
-
-needs_srvyr_block <- '## Analysis Examples with `srvyr` \\\\ {-}\n\nThe R `srvyr` library calculates summary statistics from survey data, such as the mean, total or quantile using [dplyr](https://github.com/tidyverse/dplyr/)-like syntax. [srvyr](https://github.com/gergness/srvyr) allows for the use of many verbs, such as `summarize`, `group_by`, and `mutate`, the convenience of pipe-able functions, the `tidyverse` style of non-standard evaluation and more consistent return types than the `survey` package.  [This vignette](https://cran.r-project.org/web/packages/srvyr/vignettes/srvyr-vs-survey.html) details the available features.  As a starting point for CHAPTER_TAG users, this code replicates previously-presented examples:\n\n```{r eval = FALSE , results = "hide" }\nlibrary(srvyr)\nchapter_tag_srvyr_design <- as_survey( chapter_tag_design )\n```\nCalculate the mean (average) of a linear variable, overall and by groups:\n```{r eval = FALSE , results = "hide" }\nchapter_tag_srvyr_design %>%\n\tsummarize( mean = survey_mean( linear_variable linear_narm ) )\n\nchapter_tag_srvyr_design %>%\n\tgroup_by( group_by_variable ) %>%\n\tsummarize( mean = survey_mean( linear_variable linear_narm ) )\n```'
+needs_catalog_block <- '`lodown` also provides a catalog of available microdata extracts with the `get_catalog()` function.  After requesting the CHAPTER_TAG catalog, you could pass a subsetted catalog through the `lodown()` function in order to download and import specific extracts (rather than all available extracts).\n\n```{r eval = FALSE , results = "hide" }\nlibrary(lodown)\n# examine all available CHAPTER_TAG microdata files\nchapter_tag_cat <-\n\tget_catalog( "chapter_tag" ,\n\t\toutput_dir = file.path( path.expand( "~" ) , "CHAPTER_TAG" ) get_catalog_password_parameters )\n\ncatalog_subset_description\ncatalog_subset\n# download the microdata to your local computer\nchapter_tag_cat <- lodown( "chapter_tag" , chapter_tag_cat lodown_password_parameters )\n```'
 
 needs_dplyr_block <- '## Analysis Examples with `dplyr` \\\\ {-}\n\nThe R `dplyr` library offers an alternative grammar of data manipulation to base R and SQL syntax.  [dplyr](https://github.com/tidyverse/dplyr/) offers many verbs, such as `summarize`, `group_by`, and `mutate`, the convenience of pipe-able functions, and the `tidyverse` style of non-standard evaluation.  [This vignette](https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html) details the available features.  As a starting point for CHAPTER_TAG users, this code replicates previously-presented examples:\n\n```{r eval = FALSE , results = "hide" }\nlibrary(dplyr)\ntbl_initiation_line\n```\nCalculate the mean (average) of a linear variable, overall and by groups:\n```{r eval = FALSE , results = "hide" }\nchapter_tag_tbl %>%\n\tsummarize( mean = mean( linear_variable linear_narm ) )\n\nchapter_tag_tbl %>%\n\tgroup_by( group_by_variable ) %>%\n\tsummarize( mean = mean( linear_variable linear_narm ) )\n```'
 
@@ -93,6 +91,10 @@ for ( i in seq_along( chapter_tag ) ){
 	is_survey <- any( grepl( "library(survey)" , full_text[[i]] , fixed = TRUE ) )
 	is_mi <- any( grepl( "library(mitools)" , full_text[[i]] , fixed = TRUE ) )
 	is_db <- any( grepl( "library(DBI)" , full_text[[i]] , fixed = TRUE ) ) 
+
+	
+	needs_srvyr_block <- paste0( '## Analysis Examples with `srvyr` \\\\ {-}\n\nThe R `srvyr` library calculates summary statistics from survey data, such as the mean, total or quantile using [dplyr](https://github.com/tidyverse/dplyr/)-like syntax. [srvyr](https://github.com/gergness/srvyr) allows for the use of many verbs, such as `summarize`, `group_by`, and `mutate`, the convenience of pipe-able functions, the `tidyverse` style of non-standard evaluation and more consistent return types than the `survey` package.  [This vignette](https://cran.r-project.org/web/packages/srvyr/vignettes/srvyr-vs-survey.html) details the available features.  As a starting point for CHAPTER_TAG users, this code replicates previously-presented examples:\n\n```{r eval = FALSE , results = "hide" }\n' , if( is_db ) 'library(dbplyr)\n' , 'library(srvyr)\nchapter_tag_srvyr_design <- as_survey( chapter_tag_design )\n```\nCalculate the mean (average) of a linear variable, overall and by groups:\n```{r eval = FALSE , results = "hide" }\nchapter_tag_srvyr_design %>%\n\tsummarize( mean = survey_mean( linear_variable linear_narm ) )\n\nchapter_tag_srvyr_design %>%\n\tgroup_by( group_by_variable ) %>%\n\tsummarize( mean = survey_mean( linear_variable linear_narm ) )\n```' )
+
 
 	rmd_lines <- gsub( "kind_of_analysis_examples" , if( is_survey ) "the `survey` library" else if( is_db ) "SQL and `RSQLite`" else "base R" , rmd_lines )
 	
@@ -310,6 +312,14 @@ for( this_ci_file in ci_rmd_files ){
 			
 			if( basename( this_file ) == '.travis.yml' ) if( needs_7za_install == 'yes' ) these_lines <- gsub( "# needs_7za_install" , "- p7zip-full" , these_lines ) else these_lines <- these_lines[ these_lines != "# needs_7za_install" ]
 
+			if( basename( this_file ) == 'DESCRIPTION' ) {
+				if( grepl( 'archive' , needed_libraries ) ) {
+					these_lines <- gsub( "desc_remotes_line" , "Remotes: ajdamico/lodown, jimhester/archive" , these_lines )
+				} else {
+					these_lines <- gsub( "desc_remotes_line" , "Remotes: ajdamico/lodown" , these_lines )
+				}
+			}
+			
 			if( grepl( 'setup\\.R$' , this_file ) ){
 
 				environment_variables <- pull_chunk( this_metadata_file , "environment_variables_block" )
@@ -397,7 +407,7 @@ for( this_ci_file in ci_rmd_files ){
 			these_lines <- gsub( "needed_libraries" , needed_libraries , these_lines )
 			these_lines <- gsub( "asdfree_file_commit" , asdfree_file_commit , these_lines )
 			these_lines <- gsub( "lodown_file_commit" , lodown_file_commit , these_lines )
-
+			
 			
 			writeLines( these_lines , this_file )
 		
@@ -464,7 +474,8 @@ for( this_ci_file in ci_rmd_files ){
 			these_lines <- gsub( "needed_libraries" , needed_libraries , these_lines )
 			these_lines <- gsub( "asdfree_file_commit" , asdfree_file_commit , these_lines )
 			these_lines <- gsub( "lodown_file_commit" , lodown_file_commit , these_lines )
-			
+			these_lines <- gsub( "desc_remotes_line" , "Remotes: ajdamico/lodown" , these_lines )
+
 			writeLines( these_lines , this_copied_file )
 		
 		}

@@ -5,10 +5,6 @@ The National Study on Drug Use and Health measures the prevalence and correlates
 ~~~
 
 
-lodown_password_parameters: , \\\\n\\\\tyour_email = "email@address.com" , \\\\n\\\\tyour_password = "password"
-get_catalog_password_parameters: , \\\\n\\\\t\\\\tyour_email = "email@address.com" , \\\\n\\\\t\\\\tyour_password = "password"
-
-
 table_structure: * One table with one row per sampled respondent.
 
 generalizable_population: * A complex sample survey designed to generalize to the civilian, noninstitutionalized population of the United States aged 12 and older.
@@ -20,15 +16,21 @@ administrative_organization: * Administered by the [Substance Abuse and Mental H
 
 
 needs_catalog_block: yes
-catalog_subset_description: # 2014 only
-catalog_subset: chapter_tag_cat <- subset( chapter_tag_cat , temporalCoverage == 2014 )
+catalog_subset_description: # 2016 only
+catalog_subset: chapter_tag_cat <- subset( chapter_tag_cat , year == 2016 )
 
 ~~~{analysis_examples_survey_design}
 library(survey)
 
 chapter_tag_df <- 
-	readRDS( file.path( path.expand( "~" ) , "CHAPTER_TAG" , "2014 main.rds" ) )
+	readRDS( file.path( path.expand( "~" ) , "CHAPTER_TAG" , "2016 main.rds" ) )
 
+variables_to_keep <-
+	c( 'verep' , 'vestr' , 'analwt_c' , 'health' , 'cigtry' , 'cocage' ,
+		'mjever' , 'coutyp4' , 'preg' )
+	
+chapter_tag_df <- chapter_tag_df[ variables_to_keep ] ; gc()
+	
 chapter_tag_design <- 
 	svydesign( 
 		id = ~ verep , 
@@ -62,7 +64,7 @@ chapter_tag_design <-
 		
 		county_type =
 			factor(
-				coutyp2 ,
+				coutyp4 ,
 				levels = 1:3 ,
 				labels = c( "large metro" , "small metro" , "nonmetro" )
 			)
@@ -109,28 +111,21 @@ needs_srvyr_block: yes
 
 needs_travis_build_status_line: yes
 
-~~~{machine_specific_replacements_block}
-machine_specific_replacements <- 
-	list( 
-		
-		# replace the folder path on macnix
-		c( 'path.expand( \"~\" ) , \"CHAPTER_TAG\"' , 'getwd()' ) ,
-		
-		# change other things in the script to be run
-		c( "hello" , "howdy" ) ,
-		
-		c( '"email@address.com"' , 'my_email_address' ) ,
-		
-		c( '"password"' , 'my_password' )
-		
-	)
+sample_setup_breaks: 5
+
+broken_sample_test_condition: any( chapter_tag_cat$year == 2016 )
+
+~~~{sample_setup_block}
+this_sample_break <- Sys.getenv( "this_sample_break" )
+
+library(lodown)
+
+chapter_tag_cat <-
+	get_catalog( "chapter_tag" ,
+		output_dir = file.path( path.expand( "~" ) , "CHAPTER_TAG" ) )
+
+chapter_tag_cat <- chapter_tag_cat[ split( seq( nrow( chapter_tag_cat ) ) , 1 + sort( seq( nrow( chapter_tag_cat ) ) %% sample_setup_breaks ) )[[ this_sample_break ]] , ]
+
+chapter_tag_cat <- lodown( "chapter_tag" , chapter_tag_cat )
 ~~~
-
-
-
-~~~{environment_variables_block}
-my_email_address <- Sys.getenv( "my_email_address" )
-my_password <- Sys.getenv( "my_password" )
-~~~
-
 

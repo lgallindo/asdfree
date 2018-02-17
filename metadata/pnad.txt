@@ -129,9 +129,7 @@ chapter_tag_cat <-
 # skip 2008 because it doesn't fit
 chapter_tag_cat <- subset( chapter_tag_cat , year != 2008 )
 
-record_categories <- ceiling( seq( nrow( chapter_tag_cat ) ) / ceiling( nrow( chapter_tag_cat ) / sample_setup_breaks ) )
+chapter_tag_cat <- chapter_tag_cat[ split( seq( nrow( chapter_tag_cat ) ) , 1 + sort( seq( nrow( chapter_tag_cat ) ) %% sample_setup_breaks ) )[[ this_sample_break ]] , ]
 
-chapter_tag_cat <- chapter_tag_cat[ record_categories == this_sample_break , ]
-
-lodown( "chapter_tag" , chapter_tag_cat )
+chapter_tag_cat <- lodown( "chapter_tag" , chapter_tag_cat )
 ~~~

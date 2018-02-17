@@ -30,7 +30,17 @@ catalog_subset: chapter_tag_cat <- subset( chapter_tag_cat , grepl( 'rand([a-z]+
 library(survey)
 
 chapter_tag_df <- 
-	readRDS( list.files( chapter_tag_cat$output_folder , full.names = TRUE ) )
+	readRDS( 
+		grep( 
+			'rand([a-z]+)stata(.*)rds$' , 
+			list.files( 
+				chapter_tag_cat$output_folder , 
+				full.names = TRUE ,
+				recursive = TRUE
+			) ,
+			value = TRUE 
+		) 
+	)
 	
 # RAM cleanup
 keep_vars <- 
@@ -144,7 +154,7 @@ my_password <- Sys.getenv( "my_password" )
 
 needs_travis_build_status_line: yes
 
-sample_setup_breaks: 3
+sample_setup_breaks: 4
 
 broken_sample_test_condition: any( grepl( 'rand([a-z]+)stata\\.zip' , chapter_tag_cat$file_name ) )
 
@@ -159,11 +169,9 @@ chapter_tag_cat <-
 		your_username = my_username , 
 		your_password = my_password )
 
-record_categories <- ceiling( seq( nrow( chapter_tag_cat ) ) / ceiling( nrow( chapter_tag_cat ) / sample_setup_breaks ) )
+chapter_tag_cat <- chapter_tag_cat[ split( seq( nrow( chapter_tag_cat ) ) , 1 + sort( seq( nrow( chapter_tag_cat ) ) %% sample_setup_breaks ) )[[ this_sample_break ]] , ]
 
-chapter_tag_cat <- chapter_tag_cat[ record_categories == this_sample_break , ]
-
-lodown( "chapter_tag" , chapter_tag_cat , 
+chapter_tag_cat <- lodown( "chapter_tag" , chapter_tag_cat , 
 	your_username = my_username , 
 	your_password = my_password )
 ~~~

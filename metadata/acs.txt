@@ -12,46 +12,34 @@ publication_period: * Released annually since 2005.
 
 administrative_organization: * Administered and financed by the [US Census Bureau](http://www.census.gov/).
 
+dependencies: library(archive)
 
 needs_catalog_block: yes
-catalog_subset_description: # 2011 single-year only
-catalog_subset: chapter_tag_cat <- subset( chapter_tag_cat , year == 2011 & time_period == '1-Year' )
+catalog_subset_description: # 2011 alabama single-year only. remove ` & stateab == 'al'` for a nationwide table
+catalog_subset: chapter_tag_cat <- subset( chapter_tag_cat , year == 2011 & time_period == '1-Year' & stateab == 'al' )
 
 
 ~~~{analysis_examples_survey_design}
-library(DBI)
-library(RSQLite)
+# # alternative subsets:
+
+# # nationwide merged table including puerto rico
+# chapter_tag_cat <- subset( chapter_tag_cat , year == 2011 & time_period == '1-Year' )
+# chapter_tag_cat <- lodown( "chapter_tag" , chapter_tag_cat )
+
+# # nationwide merged table excluding puerto rico
+# chapter_tag_cat <- subset( chapter_tag_cat , year == 2011 & time_period == '1-Year' & stateab != 'pr' )
+# chapter_tag_cat <- lodown( "chapter_tag" , chapter_tag_cat )
+
 library(survey)
 
+chapter_tag_df <- 
+	readRDS( 
+		file.path( path.expand( "~" ) , "CHAPTER_TAG" , 
+			"acs2011_1yr.rds" ) 
+	)
 
-# create a nationwide survey design
-# chapter_tag_design_with_puerto_rico <-
-	# svrepdesign(
-		# weight = ~pwgtp ,
-		# repweights = 'pwgtp[0-9]+' ,
-		# scale = 4 / 80 ,
-		# rscales = rep( 1 , 80 ) ,
-		# mse = TRUE ,
-		# type = 'JK1' ,
-		# data = 'acs2011_1yr'  ,
-		# dbtype = "SQLite" ,
-		# dbname = chapter_tag_cat$dbfile
-	# )
-	
-# # workaround for a bug in survey::svrepdesign.character
-# chapter_tag_design$mse <- TRUE
-
-# # remove puerto rico from the national design
-# chapter_tag_design <- subset( chapter_tag_design_with_puerto_rico , st != 72 )
-
-
-
-# to conserve RAM, create a smaller table within the database
-db <- dbConnect( RSQLite::SQLite() , chapter_tag_cat$dbfile )
-dbSendQuery( db , "CREATE TABLE alabama_1yr_2011 AS SELECT * FROM acs2011_1yr WHERE st = '01'" )
-
-# notice the edited `data =` parameter
-# this design is alabama only
+# because of the catalog subset above
+# the `merged.rds` file is alabama only
 chapter_tag_design <-
 	svrepdesign(
 		weight = ~pwgtp ,
@@ -60,9 +48,7 @@ chapter_tag_design <-
 		rscales = rep( 1 , 80 ) ,
 		mse = TRUE ,
 		type = 'JK1' ,
-		data = 'alabama_1yr_2011'  ,
-		dbtype = "SQLite" ,
-		dbname = chapter_tag_cat$dbfile
+		data = chapter_tag_df
 	)
 	
 # workaround for a bug in survey::svrepdesign.character
@@ -87,7 +73,7 @@ chapter_tag_design <-
 					33L, 34L, 35L, 36L, 37L, 38L, 39L, 
 					40L, 41L, 42L, 44L, 45L, 46L, 47L, 
 					48L, 49L, 50L, 51L, 53L, 54L, 55L, 
-					56L) ,
+					56L, 72L) ,
 				labels =
 					c("Alabama", "Alaska", "Arizona", "Arkansas", "California", 
 					"Colorado", "Connecticut", "Delaware", "District of Columbia", 
@@ -98,7 +84,7 @@ chapter_tag_design <-
 					"New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", 
 					"Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", 
 					"South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", 
-					"Washington", "West Virginia", "Wisconsin", "Wyoming")
+					"Washington", "West Virginia", "Wisconsin", "Wyoming", "Puerto Rico")
 			) ,
 		
 		cit =
@@ -194,9 +180,9 @@ svytotal(
 
 needs_travis_build_status_line: yes
 
-sample_setup_breaks: 12
+sample_setup_breaks: 50
 
-broken_sample_test_condition: any( chapter_tag_cat$year == 2011 )
+broken_sample_test_condition: any( chapter_tag_cat$stateab == 'al' & chapter_tag_cat$year == 2011 )
 
 ~~~{sample_setup_block}
 this_sample_break <- Sys.getenv( "this_sample_break" )
@@ -210,10 +196,17 @@ chapter_tag_cat <-
 # skip the three-year and five-year files
 chapter_tag_cat <- subset( chapter_tag_cat , time_period == '1-Year' )
 
-record_categories <- ceiling( seq( nrow( chapter_tag_cat ) ) / ceiling( nrow( chapter_tag_cat ) / sample_setup_breaks ) )
+# skip the top fifteen states by population
+chapter_tag_cat <- subset( chapter_tag_cat , !( stateab %in% c( 'ca' , 'tx' , 'fl' , 'ny' , 'pa' , 'il' , 'oh' , 'ga' , 'nc' , 'mi' , 'nj' , 'va' , 'wa' , 'az' ) ) )
 
-chapter_tag_cat <- chapter_tag_cat[ record_categories == this_sample_break , ]
+chapter_tag_cat <- chapter_tag_cat[ split( seq( nrow( chapter_tag_cat ) ) , 1 + sort( seq( nrow( chapter_tag_cat ) ) %% sample_setup_breaks ) )[[ this_sample_break ]] , ]
 
-lodown( "chapter_tag" , chapter_tag_cat )
+# for alabama 2011, toss out other nearby states
+if( any( chapter_tag_cat$stateab == 'al' & chapter_tag_cat$year == 2011 ) ){
+	chapter_tag_cat <- chapter_tag_cat[ chapter_tag_cat$stateab == 'al' & chapter_tag_cat$year == 2011 , ]
+}
+
+chapter_tag_cat <- lodown( "chapter_tag" , chapter_tag_cat )
 
 ~~~
+

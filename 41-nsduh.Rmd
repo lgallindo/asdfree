@@ -18,9 +18,7 @@ The R `lodown` package easily downloads and imports all available NSDUH microdat
 
 ```{r eval = FALSE }
 library(lodown)
-lodown( "nsduh" , output_dir = file.path( path.expand( "~" ) , "NSDUH" ) , 
-	your_email = "email@address.com" , 
-	your_password = "password" )
+lodown( "nsduh" , output_dir = file.path( path.expand( "~" ) , "NSDUH" ) )
 ```
 
 `lodown` also provides a catalog of available microdata extracts with the `get_catalog()` function. After requesting the NSDUH catalog, you could pass a subsetted catalog through the `lodown()` function in order to download and import specific extracts (rather than all available extracts).
@@ -30,16 +28,12 @@ library(lodown)
 # examine all available NSDUH microdata files
 nsduh_cat <-
 	get_catalog( "nsduh" ,
-		output_dir = file.path( path.expand( "~" ) , "NSDUH" ) , 
-		your_email = "email@address.com" , 
-		your_password = "password" )
+		output_dir = file.path( path.expand( "~" ) , "NSDUH" ) )
 
-# 2014 only
-nsduh_cat <- subset( nsduh_cat , temporalCoverage == 2014 )
+# 2016 only
+nsduh_cat <- subset( nsduh_cat , year == 2016 )
 # download the microdata to your local computer
-lodown( "nsduh" , nsduh_cat , 
-	your_email = "email@address.com" , 
-	your_password = "password" )
+nsduh_cat <- lodown( "nsduh" , nsduh_cat )
 ```
 
 ## Analysis Examples with the `survey` library \ {-}
@@ -54,8 +48,14 @@ Construct a complex sample survey design:
 library(survey)
 
 nsduh_df <- 
-	readRDS( file.path( path.expand( "~" ) , "NSDUH" , "2014 main.rds" ) )
+	readRDS( file.path( path.expand( "~" ) , "NSDUH" , "2016 main.rds" ) )
 
+variables_to_keep <-
+	c( 'verep' , 'vestr' , 'analwt_c' , 'health' , 'cigtry' , 'cocage' ,
+		'mjever' , 'coutyp4' , 'preg' )
+	
+nsduh_df <- nsduh_df[ variables_to_keep ] ; gc()
+	
 nsduh_design <- 
 	svydesign( 
 		id = ~ verep , 
@@ -92,7 +92,7 @@ nsduh_design <-
 		
 		county_type =
 			factor(
-				coutyp2 ,
+				coutyp4 ,
 				levels = 1:3 ,
 				labels = c( "large metro" , "small metro" , "nonmetro" )
 			)
